@@ -12,6 +12,7 @@
             --secondary: #57c5b6;
             --dark: #159895;
             --light: #f5fdfb;
+            --links: #0284c7;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -70,9 +71,49 @@
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(26, 95, 122, 0.2);
             transition: background-color 0.2s;
+            margin-bottom: 15px;
         }
         button:active {
             background-color: var(--dark);
+        }
+        .strategy-box {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0fdfa;
+            border-left: 4px solid var(--secondary);
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .strategy-box h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 16px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+        }
+        .strategy-section {
+            margin-bottom: 10px;
+        }
+        .strategy-section strong {
+            color: var(--primary);
+        }
+        .web-links {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--secondary);
+        }
+        .web-links a {
+            display: inline-block;
+            margin-right: 15px;
+            margin-top: 5px;
+            color: var(--links);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .web-links a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -81,7 +122,7 @@
 <div class="container">
     <h1>🎣 Fishing Trip Planner</h1>
     
-    <form id="plannerForm" onsubmit="generateAgnosticICS(event)">
+    <form id="plannerForm" onsubmit="processTrip(event)">
         <div class="input-group">
             <label for="location">Location:</label>
             <input type="text" id="location" name="location" value="" placeholder="e.g., City, State or Body of Water" required>
@@ -116,73 +157,244 @@
                     <option value="Yellow Perch">Yellow Perch</option>
                     <option value="Bluegill">Bluegill</option>
                     <option value="Crappie">Crappie</option>
-                    <option value="Rock Bass">Rock Bass</option>
                 </optgroup>
             </select>
         </div>
 
-        <button type="submit">Download Trip File (.ics)</button>
+        <button type="submit">Analyze & Download Trip File (.ics)</button>
     </form>
+
+    <div id="strategyOutput" class="strategy-box">
+        <h3 id="strategyTitle">Tactical Briefing</h3>
+        <div id="strategyContent"></div>
+    </div>
 </div>
 
 <script>
-function generateAgnosticICS(event) {
+const dynamicTactics = {
+    "Walleye": {
+        spring: {
+            time: "Dusk, true night, and dawn transitions.",
+            spots: "Shallow gravel shorelines, rocky reefs (4-10 ft), and upstream river channels below dams.",
+            baits: "Jig heads tipped with live minnows, or shallow running minnow plugs like original Floating Rapalas.",
+            flies: "White or chartreuse Marabou Streamers (#4), or weighted Zonkers stripped slowly over rocks."
+        },
+        summer: {
+            time: "Twilight thresholds, or midday if there's a heavy wind 'Walleye Chop'.",
+            spots: "Deep weed lines, offshore gravel humps, and mud flats in 15-25 ft of water.",
+            baits: "Live nightcrawlers on crawler harnesses behind bottom bouncers, or deep-diving Flicker Shads.",
+            flies: "Weighted Clouser Minnows (#4) or large leech patterns fished close to deep bottom structures."
+        },
+        fall: {
+            time: "Late afternoon leading directly into dusk.",
+            spots: "Steep drop-offs adjoining shallow bays, or major river mouths where baitfish congregate.",
+            baits: "Oversized jig heads with large fathead minnows, or deep trolled crankbaits.",
+            flies: "Large weighted baitfish streamers (#2) mimicking shad or shiners, fished on sink tips."
+        },
+        winter: {
+            time: "First 2 hours of daylight and the 2 hours immediately surrounding sunset.",
+            spots: "Main lake basins, structural flats (18-30 ft) near deep drops, or protected harbor channels.",
+            baits: "Jigging Raps, Swedish Pimples, or tip-ups rigged with live golden shiner minnows.",
+            flies: "Weighted Fly-Jigs or micro-epoxy minnow profiles dropped directly into vertical windows."
+        }
+    },
+    "Brown Trout": {
+        spring: {
+            time: "Mid-morning through late afternoon as water slightly warms up.",
+            spots: "Shallow nearshore Great Lakes rock structures, river run pools, and structural foam lines.",
+            baits: "Inline spinners (Mepps #2), small minnow plugs, or live drifting worms.",
+            flies: "Early Hendrickson hatches (#12-14), Black Stoneflies, or streamers swung across fast seams."
+        },
+        summer: {
+            time: "Late night (9 PM to 2 AM) during major bug hatches, or first light crack of dawn.",
+            spots: "Deep undercut river banks, structural log jams, or cold water spring-fed confluences.",
+            baits: "Live bait bags cast close to banks, or jointed minnow plugs worked through deep pools.",
+            flies: "Hexagenia dry flies (#4-6), Brown Drake dry flies, or large Sculpin streamers scraped along bottom."
+        },
+        fall: {
+            time: "Throughout the day, especially under overcast or rainy sky conditions.",
+            spots: "River gravel beds, deep staging pools, and spawning creek channels.",
+            baits: "Fresh trout/salmon spawn bags, or aggressive bright-colored minnow jerkbaits.",
+            flies: "Egg-Sucking Leeches, Egg Patterns (#10-14), or large articulated streamers triggering territorial strikes."
+        },
+        winter: {
+            time: "Warmest hours of the day (11 AM to 3 PM).",
+            spots: "Deep, slow river pools or industrial warm-water discharge outputs along shoreline harbors.",
+            baits: "Small spawn sacs, waxworms on micro jigs, or slow-retrieved inline spinners.",
+            flies: "Small midge larvae imitations (#18-22), Hare's Ear Nymphs, or slowly drifted egg styles."
+        }
+    },
+    "Rainbow Trout (Steelhead)": {
+        spring: {
+            time: "All day long during peak river migrations.",
+            spots: "Active gravel river riffles, gravel runs, and deep holding pools directly behind spawning beds.",
+            baits: "Fresh spawn bags, drifting single beads, or bright pink jigs tipped with waxworms.",
+            flies: "Glo-bugs/Egg patterns (Pink/Chartreuse #10-14), Prince Nymphs, or Stonefly nymphs."
+        },
+        summer: {
+            time: "Pre-dawn twilight through early morning before light penetrates open water.",
+            spots: "Offshore Great Lakes thermal scum lines or cold, fast river headwaters.",
+            baits: "Trolling spoons (orange/silver) high in the water column, or inline spinners in rivers.",
+            flies: "Elk Hair Caddis (#14) or terrestrial ants/beetles along shaded banks; flashy buggers offshore."
+        },
+        fall: {
+            time: "Mid-morning through late afternoon.",
+            spots: "River mouth surf zones, lower sections of migratory rivers, and deep structural pool systems.",
+            baits: "Spawn bags, casting spoons (Little Cleos), or plugs (Kwkwikfish) back-trolled in current.",
+            flies: "Egg patterns, Black/Olive Woolly Buggers (#6), or flashy intruder streamers swung deep."
+        },
+        winter: {
+            time: "Warmest window of the day (Noon to 3 PM).",
+            spots: "Deep, slow-moving river pools and wintering holes where current relaxes.",
+            baits: "Drifting single small beads, small spawn bags, or waxworms under a centerpin float.",
+            flies: "Micro stonefly nymphs (#16-18), black midges, or pale pink egg dots fished deep."
+        }
+    },
+    "Chinook (King) Salmon": {
+        spring: {
+            time: "First light to mid-morning.",
+            spots: "Shallow nearshore waters (20-60 ft depth) along southern Great Lakes coastlines.",
+            baits: "Trolling spoons or clean body baits behind short lead-core lines or planer boards.",
+            flies: "Flashy blue/silver baitfish streamers fished on sinking lines offshore."
+        },
+        summer: {
+            time: "Pre-dawn hours (4 AM to 7 AM) and late evening night shifts.",
+            spots: "Deep offshore tracking thermal layers (40-90 ft down over 100-200 ft basins).",
+            baits: "Flasher and fly combinations, meat rigs (herring strips), or glow spoons down deep.",
+            flies: "Trolling flies with heavy flashabou/mylar skirts run behind large plastic attractors."
+        },
+        fall: {
+            time: "Extreme low-light windows, pre-dawn, and true dark.",
+            spots: "Piers, breakwall channels, harbor basins, and up migrating river pools.",
+            baits: "Skein salmon spawn under large floats, large glow casting plugs (J-Plugs), or inline spinners.",
+            flies: "Large articulated streamers, Egg-Sucking Leeches, or flashy intrusion patterns fished in current."
+        },
+        winter: {
+            time: "Midday windows.",
+            spots: "Deep mid-lake basins chasing open-water schools of baitfish.",
+            baits: "Deep trolled spoons or vertical jigging setups over open bait balls.",
+            flies: "Baitfish streamers on heavy sinking lines (rarely targeted with fly gear in winter)."
+        }
+    },
+    "Largemouth Bass": {
+        spring: {
+            time: "Warm afternoons as the sun warms shallow structures.",
+            spots: "Shallow protected northern bays, canals, and spawning flats (3-6 ft).",
+            baits: "Spinnerbaits, soft plastic lizards, or slowly crawled senko worms.",
+            flies: "Hair-body frogs or woolly buggers worked slowly through warm shallow shallows."
+        },
+        summer: {
+            time: "Early morning before the heat spikes, and late dusk right up to dark.",
+            spots: "Thick lily pads, weed bed edges, underneath boat docks, and deep standing timber.",
+            baits: "Texas-rigged soft worms, topwater hollow frogs, or heavy weedless jigs.",
+            flies: "Deer-hair topwater poppers, Dahlberg Divers, or weedless baitfish patterns along pads."
+        },
+        fall: {
+            time: "Mid-day hours when water temperatures reach their daily peak.",
+            spots: "Remaining green weed lines, shallow rocky areas holding heat, or shallow flats near deep water.",
+            baits: "Lipless crankbaits, spinnerbaits, or live minnows fished near weed structures.",
+            flies: "Large baitfish streamers (Clousers/Zonkers #2) fished aggressively to trigger fall feeding."
+        },
+        winter: {
+            time: "Middle of the day during periods of stable barometric pressure.",
+            spots: "Deepest main lake weed lines, basin drop-offs, or structures in 15-25 ft.",
+            baits: "Small jigging spoons, jig-and-pig combos, or live minnows on slip bobbers.",
+            flies: "Weighted micro-leech or nymph configurations dropped directly through ice holes."
+        }
+    }
+};
+
+const fallbackTactics = {
+    time: "Dawn and Dusk transitions when light levels shift.",
+    spots: "Transition lines where shallow water structures drop off into deeper lake basins.",
+    baits: "Live nightcrawlers on light rigs, or standard inline spinners.",
+    flies: "Woolly Buggers (Black/Olive, #6-8) or generic Parachute Adams dry options."
+};
+
+function processTrip(event) {
     event.preventDefault();
 
-    // Collect dynamic form values
     const locationVal = document.getElementById('location').value.trim();
     const dateVal = document.getElementById('date').value;
     const speciesVal = document.getElementById('species').value;
 
     if (!locationVal || !dateVal || !speciesVal) return;
 
-    // Standardize dates to .ics formatting
+    // Seasonal detection
     const dateObj = new Date(dateVal);
-    const year = dateObj.getUTCFullYear();
-    const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(dateObj.getUTCDate()).padStart(2, '0');
+    const month = dateObj.getUTCMonth(); 
+    let season = "summer"; 
+
+    if (month >= 2 && month <= 4) { season = "spring"; } 
+    else if (month >= 5 && month <= 7) { season = "summer"; } 
+    else if (month >= 8 && month <= 10) { season = "fall"; } 
+    else { season = "winter"; }
+
+    const seasonText = season.charAt(0).toUpperCase() + season.slice(1);
+    const speciesData = dynamicTactics[speciesVal];
+    const profile = (speciesData && speciesData[season]) ? speciesData[season] : fallbackTactics;
     
-    const formattedDate = `${year}${month}${day}`;
+    // Dynamic URL generation for Web Intel (Guides, Reddit, Facebook, Maps)
+    const queryTerm = encodeURIComponent(`${locationVal} ${speciesVal}`);
+    const mapsLocation = encodeURIComponent(`${locationVal}`);
+    
+    const guideUrl = `https://www.google.com/search?q=${queryTerm}+fishing+guides+reports`;
+    const redditUrl = `https://www.google.com/search?q=site:reddit.com+${queryTerm}+fishing`;
+    const facebookUrl = `https://www.google.com/search?q=site:facebook.com+${queryTerm}+fishing+groups`;
+    const mapsUrl = `http://maps.google.com/?q=${mapsLocation}+fishing+spots`;
+    const baitShopsUrl = `http://maps.google.com/?q=${mapsLocation}+bait+shop`;
+
+    // Render interactive view on device screen
+    document.getElementById('strategyTitle').innerText = `🎯 ${seasonText} Strategy: ${speciesVal} at ${locationVal}`;
+    document.getElementById('strategyContent').innerHTML = `
+        <div class="strategy-section"><strong>⏰ Best Fishing Time:</strong> ${profile.time}</div>
+        <div class="strategy-section"><strong>📍 Best Locations in Body of Water:</strong> ${profile.spots}</div>
+        <div class="strategy-section"><strong>🪱 Recommended Baits:</strong> ${profile.baits}</div>
+        <div class="strategy-section"><strong>🪶 Recommended Fly Patterns:</strong> ${profile.flies}</div>
+        <div class="web-links">
+            <strong>🌐 Community & Professional Intel:</strong><br>
+            <a href="${guideUrl}" target="_blank">🗺️ Local Guides</a>
+            <a href="${redditUrl}" target="_blank">🤖 Reddit Intel</a>
+            <a href="${facebookUrl}" target="_blank">👥 Facebook Groups</a>
+        </div>
+    `;
+    document.getElementById('strategyOutput').style.display = "block";
+
+    // Format Date strings for Calendar file
+    const formattedDate = `${dateObj.getUTCFullYear()}${String(dateObj.getUTCMonth() + 1).padStart(2, '0')}${String(dateObj.getUTCDate()).padStart(2, '0')}`;
     const nextDayObj = new Date(dateObj);
     nextDayObj.setUTCDate(nextDayObj.getUTCDate() + 1);
-    const endYear = nextDayObj.getUTCFullYear();
-    const endMonth = String(nextDayObj.getUTCMonth() + 1).padStart(2, '0');
-    const endDay = String(nextDayObj.getUTCDate()).padStart(2, '0');
-    const formattedEndDate = `${endYear}${endMonth}${endDay}`;
+    const formattedEndDate = `${nextDayObj.getUTCFullYear()}${String(nextDayObj.getUTCMonth() + 1).padStart(2, '0')}${String(nextDayObj.getUTCDate()).padStart(2, '0')}`;
 
-    // Create agnostic clickable routing query components
-    const encodedLocation = encodeURIComponent(locationVal);
-    const encodedSpecies = encodeURIComponent(speciesVal);
-    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}+fishing`;
-    const baitShopsUrl = `https://www.google.com/maps/search/?api=1&query=bait+and+tackle+near+${encodedLocation}`;
-
-    // Universal platform-agnostic .ics markup block
+    // Construct platform-agnostic .ics file content
     const icsContent = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//Agnostic Fishing Planner//NONSGML v1.0//EN",
         "BEGIN:VEVENT",
         `DTSTART;VALUE=DATE:${formattedDate}`,
         `DTEND;VALUE=DATE:${formattedEndDate}`,
-        `SUMMARY:Fishing Trip: ${speciesVal} - ${locationVal}`,
+        `SUMMARY:Fishing Trip: ${speciesVal} (${locationVal})`,
         `LOCATION:${locationVal}`,
-        "DESCRIPTION:🎣 TRIP DETAILS AND STRATEGY\\n\\n" +
-                    `• Target: ${speciesVal}\\n` +
-                    `• Location: ${locationVal}\\n\\n` +
-                    "🗺️ NAVIGATION & DIRECTORY LINKS:\\n" +
-                    `• Public Access Points: ${mapsUrl}\\n` +
-                    `• Bait Shops (<15 mi Radius): ${baitShopsUrl}\\n\\n` +
-                    "📋 USER NOTE:\\n" +
-                    "Tap your navigation links to query up-to-date regional boundaries, live moon phase data, and active baits/hatches for this seasonal window.",
+        `DESCRIPTION:🎣 ${seasonText.toUpperCase()} STRATEGY AND FIELD INTEL:\\n\\n` +
+                    `• Best Timing: ${profile.time}\\n\\n` +
+                    `• Hotspot Targets: ${profile.spots}\\n\\n` +
+                    `• Lures & Baits: ${profile.baits}\\n\\n` +
+                    `• Recommended Flies: ${profile.flies}\\n\\n` +
+                    `🌐 LIVE COMMUNITY & WEB INTEL:\\n` +
+                    `• Guide Reports: ${guideUrl}\\n` +
+                    `• Reddit Postings: ${redditUrl}\\n` +
+                    `• Facebook Groups: ${facebookUrl}\\n\\n` +
+                    `🗺️ NAVIGATION MAP DIRECTORY:\\n` +
+                    `• Search Spots: ${mapsUrl}\\n` +
+                    `• Search Bait Shops: ${baitShopsUrl}`,
         "END:VEVENT",
         "END:VCALENDAR"
     ].join("\r\n");
 
-    // Output binary payload deployment for cross-client iPhone downloading
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.setAttribute('download', `Fishing_${formattedDate}.ics`);
+    link.setAttribute('download', `Fishing_${locationVal.replace(/\s+/g, '_')}.ics`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
