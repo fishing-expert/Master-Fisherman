@@ -344,7 +344,7 @@ function processTrip(event) {
     const mapsUrl = `http://maps.google.com/?q=${mapsLocation}+fishing+spots`;
     const baitShopsUrl = `http://maps.google.com/?q=${mapsLocation}+bait+shop`;
 
-    // Render interactive view on device screen
+    // Render interactive view on device screen with clean link names
     document.getElementById('strategyTitle').innerText = `🎯 ${seasonText} Strategy: ${speciesVal} at ${locationVal}`;
     document.getElementById('strategyContent').innerHTML = `
         <div class="strategy-section"><strong>⏰ Best Fishing Time:</strong> ${profile.time}</div>
@@ -366,7 +366,7 @@ function processTrip(event) {
     nextDayObj.setUTCDate(nextDayObj.getUTCDate() + 1);
     const formattedEndDate = `${nextDayObj.getUTCFullYear()}${String(nextDayObj.getUTCMonth() + 1).padStart(2, '0')}${String(nextDayObj.getUTCDate()).padStart(2, '0')}`;
 
-    // Construct platform-agnostic .ics file content
+    // Construct platform-agnostic .ics file content using clean text labels
     const icsContent = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
@@ -381,12 +381,12 @@ function processTrip(event) {
                     `• Lures & Baits: ${profile.baits}\\n\\n` +
                     `• Recommended Flies: ${profile.flies}\\n\\n` +
                     `🌐 LIVE COMMUNITY & WEB INTEL:\\n` +
-                    `• Guide Reports: ${guideUrl}\\n` +
-                    `• Reddit Postings: ${redditUrl}\\n` +
-                    `• Facebook Groups: ${facebookUrl}\\n\\n` +
+                    `• Local Guides: [Open Local Guides Reports](${guideUrl})\\n` +
+                    `• Reddit Intel: [Open Reddit Intel](${redditUrl})\\n` +
+                    `• Facebook Groups: [Open Facebook Groups](${facebookUrl})\\n\\n` +
                     `🗺️ NAVIGATION MAP DIRECTORY:\\n` +
-                    `• Search Spots: ${mapsUrl}\\n` +
-                    `• Search Bait Shops: ${baitShopsUrl}`,
+                    `• Fishing Spots: [Open Fishing Spots Map](${mapsUrl})\\n` +
+                    `• Bait Shops: [Open Local Bait Shops Map](${baitShopsUrl})`,
         "END:VEVENT",
         "END:VCALENDAR"
     ].join("\r\n");
