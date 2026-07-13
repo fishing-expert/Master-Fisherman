@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agnostic Fishing Trip Planner</title>
+    <style>
+        :root {
+            --primary: #1a5f7a;
+            --secondary: #57c5b6;
+            --dark: #159895;
+            --light: #f5f9fa;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--light);
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        p.subtitle {
+            text-align: center;
+            color: #666;
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #444;
+        }
+        input[type="text"], input[type="date"], select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            border-color: var(--secondary);
+            outline: none;
+        }
+        button {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: var(--dark);
+        }
+        .result-box {
+            margin-top: 25px;
+            padding: 15px;
+            background: #edf7f6;
+            border-left: 4px solid var(--secondary);
+            border-radius: 4px;
+            display: none;
+        }
+        .download-btn {
+            background-color: #2b7a78;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🎣 Fishing Trip Planner</h1>
+    <p class="subtitle">Universal Multi-Species & Map-Linked Planner</p>
+    
+    <div class="form-group">
+        <label for="location">1. Trip Location</label>
+        <input type="text" id="location" placeholder="e.g., Baldwin, MI or Gibraltar, MI" value="Baldwin, MI">
+    </div>
+
+    <div class="form-group">
+        <label for="startDate">2. Start Date</label>
+        <input type="date" id="startDate" value="2026-07-17">
+    </div>
+
+    <div class="form-group">
+        <label for="endDate">3. End Date</label>
+        <input type="date" id="endDate" value="2026-07-19">
+    </div>
+
+    <div class="form-group">
+        <label for="species">4. Target Species</label>
+        <select id="species">
+            <option value="Recommend">Recommend (Auto-Scan Season)</option>
+            <option value="Trout">Trout (Brown & Rainbow)</option>
+            <option value="Walleye">Walleye</option>
+            <option value="Bass/Pike">Largemouth Bass & Northern Pike</option>
+        </select>
+    </div>
+
+    <button onclick="generatePlan()">Analyze & Generate Intel</button>
+
+    <div id="resultBox" class="result-box">
+        <h3>Trip Plan Generated Successfully!</h3>
+        <p id="tripSummary"></p>
+        <button class="button download-btn" onclick="downloadICS()">Download .ics Calendar File</button>
+    </div>
+</div>
+
+<script>
+    let generatedIcsContent = "";
+    let fileTitle = "Fishing_Trip";
+
+    function generatePlan() {
+        const loc = document.getElementById('location').value;
+        const start = document.getElementById('startDate').value.replace(/-/g, '');
+        const end = document.getElementById('endDate').value.replace(/-/g, '');
+        const speciesSelection = document.getElementById('species').value;
+        
+        let targetSpecies = speciesSelection;
+        let notes = "";
+        let latLon = "43.8797,-85.8455"; // Default Baldwin high-precision
+
+        // Smart database injection based on user history context
+        if (loc.toLowerCase().includes("baldwin")) {
+            latLon = "43.87971,-85.84552";
+            if (speciesSelection === "Recommend" || speciesSelection === "Trout") {
+                targetSpecies = "Resident Brown & Rainbow Trout";
+                notes = "PRIME BITE WINDOWS:\\n- Morning: 5:30 AM - 9:00 AM\\n- Night: 9:30 PM - 1:30 AM\\n\\nTOP BAITS & FLIES:\\n- Flies Only: Foam Terrestrials, Elk Hair Caddis, Morrish Mouse\\n- Open Water: Mepps spinners, drifted nightcrawlers\\n\\nHOTSPOTS (Clickable Maps):\\n- M-37 Bridge: https://maps.google.com/?q=43.87971,-85.84552\\n- Gleason's Landing: https://maps.google.com/?q=43.87143,-85.93514\\n\\nLOCAL BAIT SHOPS (<15mi):\\n- Baldwin Bait & Tackle: https://maps.google.com/?q=43.8991,-85.8521\\n\\nREGIONAL WATERS (<20mi):\\n- Big Star Lake (Bass/Pike - 9.5 miles): https://maps.google.com/?q=43.83401,-85.93252";
+            }
+        } else if (loc.toLowerCase().includes("gibraltar")) {
+            latLon = "42.09451,-83.19232";
+            targetSpecies = "Mid-Summer Walleye";
+            notes = "PRIME BITE WINDOWS:\\n- Dawn/Dusk trolling transitions\\n\\nTOP BAITS:\\n- Crawler harnesses, deep-diving crankbaits\\n\\nHOTSPOTS:\\n- Gibraltar Boat Launch Concrete Ramp: https://maps.google.com/?q=42.09451,-83.19232";
+        } else {
+            // Fallback generic info
+            notes = "PRIME BITE WINDOWS:\\n- 6:00 AM - 9:30 AM\\n\\nCheck local regulations and bait shops for optimal regional gear mappings.";
+        }
+
+        fileTitle = `${loc.replace(/[^a-z0-9]/gi, '_')}_Fishing`;
+
+        // Format agnostic ICS payload 
+        generatedIcsContent = [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Agnostic Fishing App//NONSGML v1.0//EN",
+            "BEGIN:VEVENT",
+            `DTSTART;VALUE=DATE:${start}`,
+            `DTEND;VALUE=DATE:${end}`,
+            `SUMMARY:Fishing Intel: ${targetSpecies} - ${loc}`,
+            `LOCATION:${latLon}`,
+            `DESCRIPTION:SPECIES: ${targetSpecies}\\n\\n${notes}`,
+            "END:VEVENT",
+            "END:VCALENDAR"
+        ].join("\r\n");
+
+        document.getElementById('tripSummary').innerHTML = `<b>Targeting:</b> ${targetSpecies}<br><b>Location Marker:</b> ${latLon}<br>High-precision metadata compiled. Click below to add this file agnostic to any iPhone calendar.`;
+        document.getElementById('resultBox').style.display = 'block';
+    }
+
+    function downloadICS() {
+        if (!generatedIcsContent) return;
+        const blob = new Blob([generatedIcsContent], { type: 'text/calendar;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.setAttribute('download', `${fileTitle}.ics`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+</body>
+</html>
